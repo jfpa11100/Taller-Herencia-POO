@@ -1,0 +1,105 @@
+from abc import ABC , abstractmethod
+import os
+
+class Gestor_archivos(ABC):
+
+    def cargar_archivo(archivo):
+        
+
+        Gestor_archivos.determinar_extension(archivo)
+
+    def determinar_extension(archivo):
+        path = archivo
+        path, extension = os.path.splitext(path)
+
+        if extension == '.txt':
+            Gestor_archivos_txt.extraer_informacion(archivo)
+
+        elif extension == '.csv':
+            Gestor_archivos_csv.extraer_informacion(archivo)
+
+        elif extension == '.xlsx':
+            Gestor_archivos_xlsx.extraer_informacion(archivo)
+
+        elif extension == '.xml':
+            Gestor_archivos_xml.extraer_informacion(archivo)
+
+        else:
+            print("No se pudo leer archivo de invitados")
+
+        
+    @abstractmethod
+    def extraer_informacion():
+        pass
+
+
+class Gestor_archivos_txt(Gestor_archivos):
+    
+    def extraer_informacion():
+        pass
+
+
+class Gestor_archivos_xlsx(Gestor_archivos):
+    
+    def extraer_informacion():
+        pass
+
+
+class Gestor_archivos_csv(Gestor_archivos):
+    
+    def extraer_informacion():
+        pass
+
+class Gestor_archivos_xml(Gestor_archivos):
+    
+    def extraer_informacion():
+        pass
+
+
+class Evento():
+    def __init__(self, taquillero):
+        self.__taquillero = taquillero
+        self.__lista_invitados = []
+
+
+    def generar_lista_invitados(gestor:Gestor_archivos):
+        pass
+
+    def set_Taquillero(nombre, edad, email, id):
+        pass
+
+
+class Persona:
+    def __init__(self, nombre, edad, email, id):
+        self.__nombre = nombre
+        self.__id = id
+        self.__email = email
+        self.__edad = edad
+
+    def get_nombre(self):
+        return self.__nombre
+
+    def get_id(self):
+        return self.__id
+
+    def get_email(self):
+        return self.__email
+    
+    def get_edad(self):
+        return self.__edad
+
+
+class Taquillero(Persona):
+    
+    def validar_visitante(self, validador:Validacion_visitante, visitante:Visitante):
+        pass
+
+
+class Visitante(Persona):
+    pass
+
+
+class Validacion_visitante:
+
+    def validar(evento:Evento, visitante):
+        pass
