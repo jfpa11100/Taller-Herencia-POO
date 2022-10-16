@@ -1,29 +1,31 @@
 from abc import ABC , abstractmethod
 import csv
 import os
+import re
 import openpyxl
-
+from bs4 import BeautifulSoup
+import requests
 
 class Gestor_archivos(ABC):
 
-    @abstractmethod
-    def cargar_archivo(archivo):
+    def cargar_archivo(taquillero, archivo):
         path = archivo
         path, extension = os.path.splitext(path)
         a = open(archivo)
 
         if extension == '.txt':
-            Gestor_archivos_txt.extraer_informacion(a)
+            Gestor_archivos_txt.extraer_informacion(taquillero, a)
 
         elif extension == '.csv':
-            Gestor_archivos_csv.extraer_informacion(a)
+            Gestor_archivos_csv.extraer_informacion(taquillero, a)
 
         elif extension == '.xlsx':
             a = openpyxl.load_workbook(archivo)
-            Gestor_archivos_xlsx.extraer_informacion(a)
+            Gestor_archivos_xlsx.extraer_informacion(taquillero, a)
 
         elif extension == '.xml':
-            Gestor_archivos_xml.extraer_informacion(a)
+            a = open(archivo, errors='ignore')
+            Gestor_archivos_xml.extraer_informacion(taquillero, a)
 
         else:
             print("No se pudo leer archivo de personas")
@@ -36,11 +38,11 @@ class Gestor_archivos(ABC):
 
 class Gestor_archivos_txt(Gestor_archivos):
     
-    def extraer_informacion(archivo):
+    def extraer_informacion(taquillero, archivo):
         next(archivo)
         data = archivo.read()
         lista_visitantes = data.replace('\n', ' ').split(" ")
-        new_lista_visitantes =[]
+        new_lista_visitantes = []
         for visitante in lista_visitantes:
             visit = visitante.split("\t")
             new_lista_visitantes.append(visit)
@@ -49,20 +51,20 @@ class Gestor_archivos_txt(Gestor_archivos):
 
 class Gestor_archivos_xlsx(Gestor_archivos):
     
-    def extraer_informacion(archivo):
+    def extraer_informacion(taquillero, archivo):
         data = archivo.active
         lista_visitantes = []
         for i in range(2, data.max_row):
             for col in range(0, data.max_column):
                 lista_visitantes.append([data[i][col].value, data[i][col+1].value, data[i][col+2].value, data[i][col+3].value])
-        print(lista_visitantes)
+                break
 
-
-    
+        for visitante in lista_visitantes:
+            Visitante(visitante[0], visitante[1], visitante[2], visitante[3])
 
 class Gestor_archivos_csv(Gestor_archivos):
     
-    def extraer_informacion(archivo):
+    def extraer_informacion(taquillero, archivo):
         lista_visitantes = []
         reader = csv.reader(archivo)
         first = True
@@ -71,40 +73,42 @@ class Gestor_archivos_csv(Gestor_archivos):
                 first = False
                 continue
             lista_visitantes.append(row)
-
+        gestor =[]
         new_lista_visitantes = []
         for visitante in lista_visitantes:
             if len(visitante) == 1:
                 visit = visitante[0].split('**')
                 new_lista_visitantes.append(visit)
             else:
-                Visitante(visitante[0], visitante[1], visitante[2], visitante[3])
+                gestor.append(Visitante(visitante[0], visitante[1], visitante[2], visitante[3]))
 
         if new_lista_visitantes != 0:
             for visitante in new_lista_visitantes:
-                Visitante(visitante[0], visitante[1], visitante[2], visitante[3])
+                gestor.append(Visitante(visitante[0], visitante[1], visitante[2], visitante[3]))
 
-        # if len(new_lista_visitantes) == 0:
-        #     return lista_visitantes
-        # elif len(new_lista_visitantes) > 20:
-        #     return new_lista_visitantes
+        Evento.generar_lista_invitados(taquillero, gestor)
 
 class Gestor_archivos_xml(Gestor_archivos):
     
     def extraer_informacion(archivo):
         pass
 
-
 class Evento():
-    def __init__(self, taquillero):
-        self.__taquillero = taquillero
-        self.__lista_invitados = []
+    __taquillero = None
+    __lista_invitados = []
 
-    def generar_lista_invitados(gestor:Gestor_archivos):
-        gestor
+    def generar_lista_invitados(taquillero, gestor:Gestor_archivos):
+        for visitante in gestor:
+            Validacion_visitante.validar(taquillero, visitante)
+    
+    def set_Invitado(invitado):
+        Evento.__lista_invitados.append(invitado)
+
 
     def set_Taquillero(nombre, id, email, edad):
-        Taquillero(nombre, id, email, edad)
+        taquillero = Taquillero(nombre, id, email, edad)
+        Gestor_archivos.cargar_archivo(taquillero, "Taller_herencia_.csv")
+
 
 
 class Persona:
@@ -124,26 +128,38 @@ class Persona:
         return self.__email
     
     def get_edad(self):
-        return self.__edad
+        return int(self.__edad)
+    
+    def __repr__(self) -> str:
+        return self.__nombre
 
 
 class Visitante(Persona):
     def __init__(self, nombre, id, email, edad):
         super().__init__(nombre, id, email, edad)
 
+    def __repr__(self) -> str:
+        return super().__repr__()
 
 class Validacion_visitante:
 
-    def validar(evento:Evento, visitante):
-        pass
+    def validar(taquillero, visitante:Visitante):
+        if visitante.get_edad() >= 18:
+            correo_correcto = r"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"
+            correcto = re.match(correo_correcto, visitante.get_email()) is not None
+            if correcto == True:
+                taquillero.validar_visitante(visitante)
+                Evento.set_Invitado(visitante)
+            else:
+                print(f"{visitante}, correo Invalido")
+
+
 
 class Taquillero(Persona):
     def __init__(self, nombre, id, email, edad):
         super().__init__(nombre, id, email, edad)
 
-    def validar_visitante(self, validador:Validacion_visitante, visitante:Visitante):
-        pass
+    def validar_visitante(self, visitante:Visitante):
+        print(f"{visitante} bienvenido al evento")
 
-
-Gestor_archivos.cargar_archivo("Taller_herencia.xlsx")
-Evento.set_Taquillero("Luisa", 10115112, "luisarroyave43@gmail.com", 20)
+Evento.set_Taquillero("Luis", 10115112, "luisarroyave43@gmail.com", 20)
