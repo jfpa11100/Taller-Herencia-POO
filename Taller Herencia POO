@@ -3,8 +3,10 @@ import csv
 import os
 import re
 import openpyxl
-from bs4 import BeautifulSoup
-import requests
+
+#Bonificacion 3
+usuarios_invalid_email = []
+
 
 class Gestor_archivos(ABC):
 
@@ -104,10 +106,13 @@ class Evento():
     def set_Invitado(invitado):
         Evento.__lista_invitados.append(invitado)
 
+    def get_Lista_Invitados():
+        return Evento.__lista_invitados
+
 
     def set_Taquillero(nombre, id, email, edad):
         taquillero = Taquillero(nombre, id, email, edad)
-        Gestor_archivos.cargar_archivo(taquillero, "Taller_herencia_.csv")
+        Gestor_archivos.cargar_archivo(taquillero, "Taller_herencia.csv")
 
 
 
@@ -133,6 +138,9 @@ class Persona:
     def __repr__(self) -> str:
         return self.__nombre
 
+    def __gt__(self, other): 
+        return self.__edad > other.__edad
+
 
 class Visitante(Persona):
     def __init__(self, nombre, id, email, edad):
@@ -151,7 +159,8 @@ class Validacion_visitante:
                 taquillero.validar_visitante(visitante)
                 Evento.set_Invitado(visitante)
             else:
-                print(f"{visitante}, correo Invalido")
+                #Bonificacion 3
+                usuarios_invalid_email.append(visitante)
 
 
 
@@ -163,3 +172,30 @@ class Taquillero(Persona):
         print(f"{visitante} bienvenido al evento")
 
 Evento.set_Taquillero("Luis", 10115112, "luisarroyave43@gmail.com", 20)
+
+
+
+#Bonificación 1
+def InvitadosOrdenadosPorEdad(lista_invitados):
+    len(lista_invitados)
+    for i in range(len(lista_invitados)):
+        for j in range(len(lista_invitados)-i-1): 
+            if lista_invitados[j] > lista_invitados[j+1]:
+                lista_invitados[j], lista_invitados[j+1] = lista_invitados[j+1], lista_invitados[j]
+    return lista_invitados
+
+x = InvitadosOrdenadosPorEdad(Evento.get_Lista_Invitados()) 
+print(f"\n Lista Invitados Ordenados por Edad: \n {x}")
+
+#Bonificacion 2
+def PromedioEdadInvitados(lista_invitados):
+    suma = 0
+    for invitado in lista_invitados:
+        suma += invitado.get_edad()
+    return suma / len(lista_invitados)
+
+x = PromedioEdadInvitados(Evento.get_Lista_Invitados()) 
+print(f"\n Promedio de Edad de los invitados: \n {x}")
+
+#Bonificación 3
+print(f"\n Lista Usuarios con Emails Invalidos: \n {usuarios_invalid_email}")
