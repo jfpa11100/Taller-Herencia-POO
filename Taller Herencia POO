@@ -3,10 +3,10 @@ import csv
 import os
 import re
 import openpyxl
+import xml.etree.ElementTree as ET
 
 #Bonificacion 3
 usuarios_invalid_email = []
-
 
 class Gestor_archivos(ABC):
 
@@ -26,8 +26,7 @@ class Gestor_archivos(ABC):
             Gestor_archivos_xlsx.extraer_informacion(taquillero, a)
 
         elif extension == '.xml':
-            a = open(archivo, errors='ignore')
-            Gestor_archivos_xml.extraer_informacion(taquillero, a)
+            Gestor_archivos_xml.extraer_informacion(taquillero, archivo)
 
         else:
             print("No se pudo leer archivo de personas")
@@ -36,7 +35,6 @@ class Gestor_archivos(ABC):
     @abstractmethod
     def extraer_informacion():
         pass
-
 
 class Gestor_archivos_txt(Gestor_archivos):
     
@@ -48,8 +46,11 @@ class Gestor_archivos_txt(Gestor_archivos):
         for visitante in lista_visitantes:
             visit = visitante.split("\t")
             new_lista_visitantes.append(visit)
+        gestor = []
         for visitante in new_lista_visitantes:
-            Visitante(visitante[0], visitante[1], visitante[2], visitante[3])
+            gestor.append(Visitante(visitante[0], visitante[1], visitante[2], visitante[3]))
+
+        Evento.generar_lista_invitados(taquillero, gestor)
 
 class Gestor_archivos_xlsx(Gestor_archivos):
     
@@ -60,9 +61,11 @@ class Gestor_archivos_xlsx(Gestor_archivos):
             for col in range(0, data.max_column):
                 lista_visitantes.append([data[i][col].value, data[i][col+1].value, data[i][col+2].value, data[i][col+3].value])
                 break
-
+        gestor = []
         for visitante in lista_visitantes:
-            Visitante(visitante[0], visitante[1], visitante[2], visitante[3])
+            gestor.append(Visitante(visitante[0], visitante[1], visitante[2], visitante[3]))
+
+        Evento.generar_lista_invitados(taquillero, gestor)
 
 class Gestor_archivos_csv(Gestor_archivos):
     
@@ -92,8 +95,10 @@ class Gestor_archivos_csv(Gestor_archivos):
 
 class Gestor_archivos_xml(Gestor_archivos):
     
-    def extraer_informacion(archivo):
-        pass
+    def extraer_informacion(taquillero, archivo):
+
+        gestor = []
+        Evento.generar_lista_invitados(taquillero, gestor)
 
 class Evento():
     __taquillero = None
@@ -112,7 +117,7 @@ class Evento():
 
     def set_Taquillero(nombre, id, email, edad):
         taquillero = Taquillero(nombre, id, email, edad)
-        Gestor_archivos.cargar_archivo(taquillero, "Taller_herencia.csv")
+        Gestor_archivos.cargar_archivo(taquillero, "Taller_herencia_.csv")
 
 
 
